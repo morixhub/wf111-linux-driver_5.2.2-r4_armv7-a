@@ -181,4 +181,4 @@ __attribute__((section(".modinfo"))) =
 MODULE_ALIAS("sdio:c*v032Ad0007*");
 MODULE_ALIAS("sdio:c*v032Ad0008*");
 
-MODULE_INFO(srcversion, "D50F8B626C35859DE4EB04A");
+MODULE_INFO(srcversion, "9CF4C1F40788D50F9668253");

@@ -54,6 +54,9 @@
  * CsrWifiSmeIbssStationIndSend()
  */
 
+#define lastQualitySize 5
+struct iw_quality lastQuality[lastQualitySize] = {{0}};
+unsigned lastQualityPos = 0;
 
 void CsrWifiSmeMicFailureIndHandler(void* drvpriv, CsrWifiFsmEvent* msg)
 {
@@ -150,6 +153,7 @@ void CsrWifiSmeScanResultsGetCfmHandler(void* drvpriv, CsrWifiFsmEvent* msg)
         }
 
         /* Take a Copy of the scan Results :-) */
+        //[AESYS] scanCopy = CsrPmemAlloc(bytesRequired);
         scanCopy = CsrPmemAllocVirtual(bytesRequired);
 
         if(!scanCopy)
@@ -233,6 +237,17 @@ void CsrWifiSmeDisconnectCfmHandler(void* drvpriv, CsrWifiFsmEvent* msg)
     }
 
     sme_complete_request(priv, cfm->status);
+
+    lastQualityPos = 0;
+    int a;
+    for(a = 0; a < lastQualitySize; ++a)
+    {
+        lastQuality[a].updated = 0;
+    }
+
+    priv->wext_wireless_stats.qual.level   = (u8)0; /* -192 : 63 */
+    priv->wext_wireless_stats.qual.noise   = (u8)0;  /* -192 : 63 */
+    priv->wext_wireless_stats.qual.qual    = 0;         /* 0 : 255 */
 #endif
 }
 
@@ -565,7 +580,7 @@ void CsrWifiSmeConnectionQualityIndHandler(void* drvpriv, CsrWifiFsmEvent* msg)
 #ifdef CSR_SUPPORT_WEXT
     unifi_priv_t *priv = (unifi_priv_t*)drvpriv;
     CsrWifiSmeConnectionQualityInd* ind = (CsrWifiSmeConnectionQualityInd*)msg;
-    int signal, noise, snr;
+    int currentSignal, currentNoise, currentSnr;
 
     if (priv == NULL) {
         unifi_error(NULL, "CsrWifiSmeConnectionQualityIndSend: Invalid ospriv.\n");
@@ -578,37 +593,100 @@ void CsrWifiSmeConnectionQualityIndHandler(void* drvpriv, CsrWifiFsmEvent* msg)
      * add 0x100 onto the number if it is negative,
      * once clipped to the correct range.
      */
-    signal = ind->linkQuality.unifiRssi;
+    currentSignal = ind->linkQuality.unifiRssi;
     /* Clip range of snr */
-    snr    = (ind->linkQuality.unifiSnr > 0) ? ind->linkQuality.unifiSnr : 0; /* In dB relative, from 0 - 255 */
-    snr    = (snr < 255) ? snr : 255;
-    noise  = signal - snr;
+    currentSnr    = (ind->linkQuality.unifiSnr > 0) ? ind->linkQuality.unifiSnr : 0; /* In dB relative, from 0 - 255 */
+    currentSnr    = (currentSnr < 255) ? currentSnr : 255;
+    currentNoise  = currentSignal - currentSnr;
 
     /* Clip range of signal */
-    signal = (signal < 63) ? signal : 63;
-    signal = (signal > -192) ? signal : -192;
+    currentSignal = (currentSignal < 63) ? currentSignal : 63;
+    currentSignal = (currentSignal > -192) ? currentSignal : -192;
 
     /* Clip range of noise */
-    noise = (noise < 63) ? noise : 63;
-    noise = (noise > -192) ? noise : -192;
+    currentNoise = (currentNoise < 63) ? currentNoise : 63;
+    currentNoise = (currentNoise > -192) ? currentNoise : -192;
 
     /* Make u8 */
-    signal = ( signal < 0 ) ? signal + 0x100 : signal;
-    noise = ( noise < 0 ) ? noise + 0x100 : noise;
+    currentSignal = ( currentSignal < 0 ) ? currentSignal + 0x100 : currentSignal;
+    currentNoise = ( currentNoise < 0 ) ? currentNoise + 0x100 : currentNoise;
 
-    priv->wext_wireless_stats.qual.level   = (u8)signal; /* -192 : 63 */
-    priv->wext_wireless_stats.qual.noise   = (u8)noise;  /* -192 : 63 */
-    priv->wext_wireless_stats.qual.qual    = snr;         /* 0 : 255 */
-    priv->wext_wireless_stats.qual.updated = 0;
+    lastQuality[lastQualityPos].level   = (u8)currentSignal; /* -192 : 63 */
+    lastQuality[lastQualityPos].noise   = (u8)currentNoise;  /* -192 : 63 */
+    lastQuality[lastQualityPos].qual    = currentSnr;         /* 0 : 255 */
+    lastQuality[lastQualityPos].updated = 0;
 
 #if WIRELESS_EXT > 16
-    priv->wext_wireless_stats.qual.updated |= IW_QUAL_LEVEL_UPDATED |
+    lastQuality[lastQualityPos].updated |= IW_QUAL_LEVEL_UPDATED |
                                               IW_QUAL_NOISE_UPDATED |
                                               IW_QUAL_QUAL_UPDATED;
 #if WIRELESS_EXT > 18
-    priv->wext_wireless_stats.qual.updated |= IW_QUAL_DBM;
+    lastQuality[lastQualityPos].updated |= IW_QUAL_DBM;
 #endif
 #endif
+
+    int avgSignal = 0, avgNoise = 0, avgSnr = 0;
+    int dataMin[3] = { lastQuality[0].level, lastQuality[0].noise, lastQuality[0].qual };
+    int dataMax[3] = { lastQuality[0].level, lastQuality[0].noise, lastQuality[0].qual };
+    int lqId;
+    for(lqId = 0; lqId < lastQualitySize; ++lqId)
+    {
+        if(!lastQuality[lqId].updated)
+        {
+            if(lqId >= 3)
+            {
+                break;
+            }
+
+            priv->wext_wireless_stats.qual.level   = (u8)currentSignal; /* -192 : 63 */
+            priv->wext_wireless_stats.qual.noise   = (u8)currentNoise;  /* -192 : 63 */
+            priv->wext_wireless_stats.qual.qual    = currentSnr;         /* 0 : 255 */
+            priv->wext_wireless_stats.qual.updated = lastQuality[lastQualityPos].updated;
+
+            lastQualityPos++;
+            return;
+        }
+
+        avgSignal += lastQuality[lqId].level;
+        avgNoise += lastQuality[lqId].noise;
+        avgSnr  += lastQuality[lqId].qual;
+
+        if(lastQuality[lqId].level < dataMin[0])
+        {
+            dataMin[0] = lastQuality[lqId].level;
+            dataMin[1] = lastQuality[lqId].noise;
+            dataMin[2] = lastQuality[lqId].qual;
+        }
+        if(lastQuality[lqId].level > dataMax[0])
+        {
+            dataMax[0] = lastQuality[lqId].level;
+            dataMax[1] = lastQuality[lqId].noise;
+            dataMax[2] = lastQuality[lqId].qual;
+        }
+    }
+
+    if(lqId >= lastQualitySize)
+    {
+        avgSignal -= dataMin[0] + dataMax[0];
+        avgNoise -= dataMin[1] + dataMax[1];
+        avgSnr  -= dataMin[2] + dataMax[2];
+        lqId -= 2;
+    }
+
+    avgSignal /= lqId;
+    avgNoise  /= lqId;
+    avgSnr    /= lqId;
+
+    priv->wext_wireless_stats.qual.level   = (u8)avgSignal; /* -192 : 63 */
+    priv->wext_wireless_stats.qual.noise   = (u8)avgNoise;  /* -192 : 63 */
+    priv->wext_wireless_stats.qual.qual    = avgSnr;         /* 0 : 255 */
+    priv->wext_wireless_stats.qual.updated = lastQuality[lastQualityPos].updated;
+
+    lastQualityPos++;
+    if(lastQualityPos >= lastQualitySize)
+    {
+        lastQualityPos = 0;
+    }
 #endif
 }
 

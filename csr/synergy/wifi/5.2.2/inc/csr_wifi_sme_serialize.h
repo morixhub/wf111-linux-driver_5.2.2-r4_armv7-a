@@ -304,6 +304,16 @@ extern void* CsrWifiSmeSetReqDes(CsrUint8 *buffer, CsrSize len);
 extern CsrSize CsrWifiSmeSetReqSizeof(void *msg);
 extern void CsrWifiSmeSetReqSerFree(void *msg);
 
+extern CsrUint8* CsrWifiSmeSetTimingsSer(CsrUint8 *ptr, CsrSize *len, void *msg);
+extern void* CsrWifiSmeSetTimingsDes(CsrUint8 *buffer, CsrSize len);
+extern CsrSize CsrWifiSmeSetTimingsSizeof(void *msg);
+extern void CsrWifiSmeSetTimingsSerFree(void *msg);
+
+extern CsrUint8* CsrWifiSmeSetMaxResultsSer(CsrUint8 *ptr, CsrSize *len, void *msg);
+extern void* CsrWifiSmeSetMaxResultsDes(CsrUint8 *buffer, CsrSize len);
+extern CsrSize CsrWifiSmeSetMaxResultsSizeof(void *msg);
+extern void CsrWifiSmeSetMaxResultsSerFree(void *msg);
+
 #define CsrWifiSmeActivateCfmSer CsrWifiEventCsrUint16Ser
 #define CsrWifiSmeActivateCfmDes CsrWifiEventCsrUint16Des
 #define CsrWifiSmeActivateCfmSizeof CsrWifiEventCsrUint16Sizeof

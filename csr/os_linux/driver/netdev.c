@@ -147,13 +147,17 @@ static int uf_net_open(struct net_device *dev);
 static int uf_net_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 static int uf_net_stop(struct net_device *dev);
 static struct net_device_stats *uf_net_get_stats(struct net_device *dev);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,19,0)
+static u16 uf_net_select_queue(struct net_device *dev, struct sk_buff *skb, struct net_device *sb_dev, select_queue_fallback_t fallback);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
 static u16 uf_net_select_queue(struct net_device *dev, struct sk_buff *skb, void *accel_priv, select_queue_fallback_t fallback);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,13,0)
 static u16 uf_net_select_queue(struct net_device *dev, struct sk_buff *skb, void *accel_priv);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28)
 static u16 uf_net_select_queue(struct net_device *dev, struct sk_buff *skb);
 #endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,32)
 static netdev_tx_t uf_net_xmit(struct sk_buff *skb, struct net_device *dev);
 #else
@@ -1016,7 +1020,9 @@ get_packet_priority(unifi_priv_t *priv, struct sk_buff *skb, const struct ethhdr
  * ---------------------------------------------------------------------------
  */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,19,0)
+static u16 uf_net_select_queue(struct net_device *dev, struct sk_buff *skb, struct net_device *sb_dev, select_queue_fallback_t fallback)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
 static u16 uf_net_select_queue(struct net_device *dev, struct sk_buff *skb, void *accel_priv, select_queue_fallback_t fallback)
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,13,0)
 static u16 uf_net_select_queue(struct net_device *dev, struct sk_buff *skb, void *accel_priv)
@@ -2430,9 +2436,11 @@ indicate_rx_skb(unifi_priv_t *priv, CsrUint16 ifTag, CsrUint8* dst_a, CsrUint8* 
 #endif
 #endif
  
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
     if (dev != NULL) {
         dev->last_rx = jiffies;
     }
+#endif
 
     /* Bump rx stats */
     priv->interfacePriv[ifTag]->stats.rx_packets++;

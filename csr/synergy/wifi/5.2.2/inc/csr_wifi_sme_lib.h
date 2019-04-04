@@ -3456,6 +3456,42 @@ extern const CsrCharString *CsrWifiSmeDownstreamPrimNames[CSR_WIFI_SME_PRIM_DOWN
 #define CsrWifiSmeSetReqSend(src__, dataLength__, data__) \
     CsrWifiSmeSetReqSendTo(CSR_WIFI_SME_LIB_DESTINATION_QUEUE, src__, dataLength__, data__)
 
+#define CsrWifiSmeSetTimingsCreate(msg__, dst__, src__, data__) \
+    msg__ = (CsrWifiSmeSetTimings *) CsrPmemAlloc(sizeof(CsrWifiSmeSetTimings)); \
+    CsrWifiFsmEventInit(&msg__->common, CSR_WIFI_SME_PRIM, CSR_WIFI_SME_SET_TIMINGS, dst__, src__); \
+    msg__->data[0] = (data__[0]); \
+    msg__->data[1] = (data__[1]); \
+    msg__->data[2] = (data__[2]); \
+    msg__->data[3] = (data__[3]); \
+    msg__->data[4] = (data__[4]); \
+    msg__->data[5] = (data__[5]); \
+    msg__->data[6] = (data__[6]);
+
+#define CsrWifiSmeSetTimingsSendTo(dst__, src__, data__) \
+    { \
+        CsrWifiSmeSetTimings *msg__; \
+        CsrWifiSmeSetTimingsCreate(msg__, dst__, src__, data__); \
+        CsrMsgTransport(dst__, CSR_WIFI_SME_PRIM, msg__); \
+    }
+
+#define CsrWifiSmeSetTimingsSend(src__, data__) \
+    CsrWifiSmeSetTimingsSendTo(CSR_WIFI_SME_LIB_DESTINATION_QUEUE, src__, data__)
+
+#define CsrWifiSmeSetMaxResultsCreate(msg__, dst__, src__, data__) \
+    msg__ = (CsrWifiSmeSetMaxResults *) CsrPmemAlloc(sizeof(CsrWifiSmeSetMaxResults)); \
+    CsrWifiFsmEventInit(&msg__->common, CSR_WIFI_SME_PRIM, CSR_WIFI_SME_SET_MAX_RESULTS, dst__, src__); \
+    msg__->value = (data__);
+
+#define CsrWifiSmeSetMaxResultsSendTo(dst__, src__, data__) \
+    { \
+        CsrWifiSmeSetMaxResults *msg__; \
+        CsrWifiSmeSetMaxResultsCreate(msg__, dst__, src__, data__); \
+        CsrMsgTransport(dst__, CSR_WIFI_SME_PRIM, msg__); \
+    }
+
+#define CsrWifiSmeSetMaxResultsSend(src__, data__) \
+    CsrWifiSmeSetMaxResultsSendTo(CSR_WIFI_SME_LIB_DESTINATION_QUEUE, src__, data__)
+
 /*******************************************************************************
 
   NAME

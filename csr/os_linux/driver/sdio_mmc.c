@@ -965,7 +965,7 @@ CsrSdioPowerOn(CsrSdioFunction *function)
 
     _sdio_claim_host(func);
     if (!card_is_powered) {
-#if ((LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37) || LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)))
+#if ((LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37) || (LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0) && LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0))))
 	    mmc_power_restore_host(host);
 #endif
 	    card_is_powered = 1;
@@ -997,7 +997,7 @@ CsrSdioPowerOff(CsrSdioFunction *function)
 
     _sdio_claim_host(func);
     if (card_is_powered) {
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37) || LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0))
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37) || (LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0) && LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)))
 	    mmc_power_save_host(host);
 #endif
 	    card_is_powered = 0;

@@ -215,7 +215,9 @@ netrx_radiotap(unifi_priv_t *priv,
     /* Pass up to Linux network stack */
     netif_rx_ni(skb);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
     dev->last_rx = jiffies;
+#endif
     
     /* Bump the rx stats */
     priv->stats.rx_packets++;
@@ -354,7 +356,9 @@ netrx_prism(unifi_priv_t *priv,
     /* Pass up to Linux network stack */
     netif_rx_ni(skb);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
     dev->last_rx = jiffies;
+#endif
     
     /* Bump the rx stats */
     priv->stats.rx_packets++;

@@ -3483,9 +3483,11 @@ typedef struct
 #define CSR_WIFI_SME_INTERFACE_CAPABILITY_GET_REQ         ((CsrWifiSmePrim) (0x0035 + CSR_WIFI_SME_PRIM_DOWNSTREAM_LOWEST))
 #define CSR_WIFI_SME_WPS_CONFIGURATION_REQ                ((CsrWifiSmePrim) (0x0036 + CSR_WIFI_SME_PRIM_DOWNSTREAM_LOWEST))
 #define CSR_WIFI_SME_SET_REQ                              ((CsrWifiSmePrim) (0x0037 + CSR_WIFI_SME_PRIM_DOWNSTREAM_LOWEST))
+#define CSR_WIFI_SME_SET_TIMINGS                          ((CsrWifiSmePrim) (0x0038 + CSR_WIFI_SME_PRIM_DOWNSTREAM_LOWEST))
+#define CSR_WIFI_SME_SET_MAX_RESULTS                      ((CsrWifiSmePrim) (0x0039 + CSR_WIFI_SME_PRIM_DOWNSTREAM_LOWEST))
 
 
-#define CSR_WIFI_SME_PRIM_DOWNSTREAM_HIGHEST           (0x0037 + CSR_WIFI_SME_PRIM_DOWNSTREAM_LOWEST)
+#define CSR_WIFI_SME_PRIM_DOWNSTREAM_HIGHEST           (0x0039 + CSR_WIFI_SME_PRIM_DOWNSTREAM_LOWEST)
 
 /* Upstream */
 #define CSR_WIFI_SME_PRIM_UPSTREAM_LOWEST              (0x0000 + CSR_PRIM_UPSTREAM)
@@ -4913,6 +4915,18 @@ typedef struct
     CsrUint32       dataLength;
     CsrUint8       *data;
 } CsrWifiSmeSetReq;
+
+typedef struct
+{
+    CsrWifiFsmEvent common;
+    CsrUint8        data[7];
+} CsrWifiSmeSetTimings;
+
+typedef struct
+{
+    CsrWifiFsmEvent common;
+    CsrUint8        value;
+} CsrWifiSmeSetMaxResults;
 
 /*******************************************************************************
 

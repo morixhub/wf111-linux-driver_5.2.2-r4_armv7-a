@@ -49,7 +49,13 @@
  */
 
 #ifdef CSR_SUPPORT_SME
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+static void check_inactivity_timer_expire_func(struct timer_list *timer);
+#else
 static void check_inactivity_timer_expire_func(unsigned long data);
+#endif
+
 void uf_send_disconnected_ind_wq(struct work_struct *work);
 #endif
 
@@ -2505,10 +2511,14 @@ static int peer_add_new_record(unifi_priv_t *priv, CsrWifiRouterCtrlPeerAddReq *
                             interfacePriv->num_stations_joined);
 
                 interfacePriv->sta_activity_check_enabled = TRUE;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+                timer_setup(&interfacePriv->sta_activity_check_timer, check_inactivity_timer_expire_func, 0);
+#else
                 interfacePriv->sta_activity_check_timer.function = check_inactivity_timer_expire_func;
                 interfacePriv->sta_activity_check_timer.data = (unsigned long)interfacePriv;
-
                 init_timer(&interfacePriv->sta_activity_check_timer);
+#endif
+
                 mod_timer(&interfacePriv->sta_activity_check_timer,
                           (jiffies + usecs_to_jiffies(STA_INACTIVE_DETECTION_TIMER_INTERVAL * 1000 * 1000)));
             }
@@ -2528,14 +2538,25 @@ static int peer_add_new_record(unifi_priv_t *priv, CsrWifiRouterCtrlPeerAddReq *
 
 
 #ifdef CSR_SUPPORT_SME
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+static void check_inactivity_timer_expire_func(struct timer_list *timer)
+#else
 static void check_inactivity_timer_expire_func(unsigned long data)
+#endif
 {
     struct unifi_priv *priv;
     CsrWifiRouterCtrlStaInfo_t *sta_record = NULL;
     CsrUint8 i = 0;
     CsrTime now;
     CsrTime inactive_time;
-    netInterface_priv_t *interfacePriv = (netInterface_priv_t *) data;
+    netInterface_priv_t *interfacePriv;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+    interfacePriv = container_of(timer, netInterface_priv_t, sta_activity_check_timer);
+#else
+    interfacePriv = (netInterface_priv_t *) data;
+#endif
 
     if (!interfacePriv)
     {
@@ -2826,11 +2847,20 @@ void uf_send_ba_err_wq(struct work_struct *work)
                                           CSR_RESULT_SUCCESS);
 }
 
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+static void ba_session_terminate_timer_func(struct timer_list *timer)
+#else
 static void ba_session_terminate_timer_func(unsigned long data)
+#endif
 {
-    ba_session_rx_struct *ba_session = (ba_session_rx_struct *)data;
+    ba_session_rx_struct *ba_session;
     struct unifi_priv *priv;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+    ba_session = container_of(timer, ba_session_rx_struct, timer);
+#else
+    ba_session = (ba_session_rx_struct *)data;
+#endif
 
     if (!ba_session)
     {
@@ -3135,9 +3165,15 @@ CsrBool blockack_session_start(unifi_priv_t                 *priv,
                         if (timeout)
                         {
                             ba_session_rx->timeout = timeout;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+                            timer_setup(&ba_session_rx->timer, ba_session_terminate_timer_func, 0);
+#else
                             ba_session_rx->timer.function = ba_session_terminate_timer_func;
                             ba_session_rx->timer.data = (unsigned long)ba_session_rx;
                             init_timer(&ba_session_rx->timer);
+#endif
+
                             mod_timer(&ba_session_rx->timer, (jiffies + usecs_to_jiffies((ba_session_rx->timeout) * 1024)));
                         }
                         /*
@@ -3218,9 +3254,15 @@ CsrBool blockack_session_start(unifi_priv_t                 *priv,
         if (timeout)
         {
             ba_session_rx->timeout = timeout;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+            timer_setup(&ba_session_rx->timer, ba_session_terminate_timer_func, 0);
+#else
             ba_session_rx->timer.function = ba_session_terminate_timer_func;
             ba_session_rx->timer.data = (unsigned long)ba_session_rx;
             init_timer(&ba_session_rx->timer);
+#endif
+
             mod_timer(&ba_session_rx->timer, (jiffies + usecs_to_jiffies((ba_session_rx->timeout) * 1024)));
         }
 

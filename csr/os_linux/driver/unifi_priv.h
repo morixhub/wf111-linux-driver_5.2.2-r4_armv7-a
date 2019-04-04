@@ -389,6 +389,7 @@ struct CsrWifiSmeApConfig
     CsrWifiNmeApCredentials credentials;
     CsrUint8                max_connections;
     CsrUint8                if_index;
+    CsrBool                 hidden;
 };
 #endif
 

@@ -85,13 +85,24 @@ done
 
 # init_mode==2 means an SME userspace build
 if [ "${init_mode}" = "2" ]; then
+    
     mibfileparam="--wifi-mib $fwpath/ufmib.dat"
     [ -f $fwpath/ufmib.dat ] || mibfileparam=
 
     localmibfileparam="--wifi-mib $fwpath/localmib.dat"
     [ -f $fwpath/localmib.dat ] || localmibfileparam=
+    if [ -f /etc/unifi.conf ]; then
+    	. /etc/unifi.conf
+    	scanint="$NORM_GOOD,$NORM_POOR,$NORM_UNUSABLE,$NORM_NO_CONN,$ROAM_GOOD,$ROAM_POOR,$ROAM_UNUSABLE"
+    	/usr/sbin/unifi_helper --wifi-char-device $dev --wifi-on --wifi-restart-on-error --wifi-exit-on-error --wifi-exit-on-unplug --wifi-address $macaddr $mibfileparam $localmibfileparam --scanint $scanint --maxresults $MAX_SCAN_RESULTS
+    else
+    	/usr/sbin/unifi_helper --wifi-char-device $dev --wifi-on --wifi-restart-on-error --wifi-exit-on-error --wifi-exit-on-unplug --wifi-address $macaddr $mibfileparam $localmibfileparam
+    fi
 
-    /usr/sbin/unifi_helper --wifi-char-device $dev --wifi-on --wifi-restart-on-error --wifi-exit-on-error --wifi-exit-on-unplug --wifi-address $macaddr $mibfileparam $localmibfileparam
+    rmmod unifi_sdio
+    sleep 2
+    modprobe unifi_sdio
+
     exit 0
 fi
 

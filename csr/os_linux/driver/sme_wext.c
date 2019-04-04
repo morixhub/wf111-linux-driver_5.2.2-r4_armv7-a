@@ -504,7 +504,7 @@ static int power(int a, int b)
 
 static int decode_parameter_from_string(unifi_priv_t *priv, char **str_ptr,
                                         const char *token, int param_type,
-                                        void  *dst, int param_max_len)
+                                        void  *dst, int param_max_len, int required)
 {
     CsrUint8 int_str[7] = "0";
     CsrUint32 param_str_len;
@@ -568,7 +568,10 @@ static int decode_parameter_from_string(unifi_priv_t *priv, char **str_ptr,
     }
     else
     {
-        unifi_error(priv, "decode_parameter_from_string: Token:%s not found in %s \n", token, orig_str);
+        if(required)
+        {
+            unifi_error(priv, "decode_parameter_from_string: Token:%s not found in %s \n", token, orig_str);
+        }
         return -1;
     }
     return 0;
@@ -584,7 +587,7 @@ static int store_ap_advanced_config_from_string(unifi_priv_t *priv, char *param_
 
     /* Check for BI */
     ret = decode_parameter_from_string(priv, &str_ptr, "BI=",
-                                       PARAM_TYPE_INT, &tmp_var, 5);
+                                       PARAM_TYPE_INT, &tmp_var, 5, TRUE);
     if (ret)
     {
         unifi_error(priv, "store_ap_advanced_config_from_string: BI not found\n");
@@ -592,7 +595,7 @@ static int store_ap_advanced_config_from_string(unifi_priv_t *priv, char *param_
     }
     ap_mac_config->beaconInterval = tmp_var;
     ret = decode_parameter_from_string(priv, &str_ptr, "DTIM_PER=",
-                                       PARAM_TYPE_INT, &tmp_var, 5);
+                                       PARAM_TYPE_INT, &tmp_var, 5, TRUE);
     if (ret)
     {
         unifi_error(priv, "store_ap_advanced_config_from_string: DTIM_PER not found\n");
@@ -600,7 +603,7 @@ static int store_ap_advanced_config_from_string(unifi_priv_t *priv, char *param_
     }
     ap_mac_config->dtimPeriod = tmp_var;
     ret = decode_parameter_from_string(priv, &str_ptr, "WMM=",
-                                       PARAM_TYPE_INT, &tmp_var, 5);
+                                       PARAM_TYPE_INT, &tmp_var, 5, TRUE);
     if (ret)
     {
         unifi_error(priv, "store_ap_advanced_config_from_string: WMM not found\n");
@@ -608,7 +611,7 @@ static int store_ap_advanced_config_from_string(unifi_priv_t *priv, char *param_
     }
     ap_mac_config->wmmEnabled = tmp_var;
     ret = decode_parameter_from_string(priv, &str_ptr, "PHY=",
-                                       PARAM_TYPE_STRING, phy_mode, 5);
+                                       PARAM_TYPE_STRING, phy_mode, 5, TRUE);
     if (ret)
     {
         unifi_error(priv, "store_ap_advanced_config_from_string: PHY not found\n");
@@ -651,7 +654,7 @@ static int store_ap_config_from_string(unifi_priv_t *priv, char *param_str)
         return -1;
     }
     if (decode_parameter_from_string(priv, &str_ptr, "ASCII_CMD=",
-                                     PARAM_TYPE_STRING, sub_cmd, 6) != 0)
+                                     PARAM_TYPE_STRING, sub_cmd, 6, TRUE) != 0)
     {
         return -1;
     }
@@ -667,7 +670,7 @@ static int store_ap_config_from_string(unifi_priv_t *priv, char *param_str)
     memset(ap_config, 0, sizeof(CsrWifiSmeApConfig_t));
     ret = decode_parameter_from_string(priv, &str_ptr, "SSID=",
                                        PARAM_TYPE_STRING, ap_config->ssid.ssid,
-                                       CSR_WIFI_MAX_SSID_LEN);
+                                       CSR_WIFI_MAX_SSID_LEN, TRUE);
     if (ret)
     {
         unifi_error(priv, "store_ap_config_from_string: SSID not found\n");
@@ -676,14 +679,14 @@ static int store_ap_config_from_string(unifi_priv_t *priv, char *param_str)
     ap_config->ssid.length = strlen(ap_config->ssid.ssid);
 
     ret = decode_parameter_from_string(priv, &str_ptr, "SEC=",
-                                       PARAM_TYPE_STRING, sec, CSR_WIFI_MAX_SEC_LEN);
+                                       PARAM_TYPE_STRING, sec, CSR_WIFI_MAX_SEC_LEN, TRUE);
     if (ret)
     {
         unifi_error(priv, "store_ap_config_from_string: SEC not found\n");
         return -1;
     }
     ret = decode_parameter_from_string(priv, &str_ptr, "KEY=",
-                                       PARAM_TYPE_STRING,  key, CSR_WIFI_MAX_KEY_LEN);
+                                       PARAM_TYPE_STRING,  key, CSR_WIFI_MAX_KEY_LEN, TRUE);
     if (!strcasecmp(sec, "open"))
     {
         unifi_trace(priv, UDBG2, "store_ap_config_from_string: security open");
@@ -727,20 +730,30 @@ static int store_ap_config_from_string(unifi_priv_t *priv, char *param_str)
     }
     /* Get the decoded value in a temp int variable to ensure that other fields within the struct
        which are of type other than int are not over written */
-    ret = decode_parameter_from_string(priv, &str_ptr, "CHANNEL=", PARAM_TYPE_INT, &tmp_var, 5);
+    ret = decode_parameter_from_string(priv, &str_ptr, "CHANNEL=", PARAM_TYPE_INT, &tmp_var, 5, TRUE);
     if (ret)
     {
         return -1;
     }
     ap_config->channel = tmp_var;
-    ret = decode_parameter_from_string(priv, &str_ptr, "PREAMBLE=", PARAM_TYPE_INT, &tmp_var, 5);
+    ret = decode_parameter_from_string(priv, &str_ptr, "HIDDEN=", PARAM_TYPE_INT,  &tmp_var, 5, FALSE);
+    if (ret)
+    {
+        ap_config->hidden = 0;
+    }
+    else
+    {
+        ap_config->hidden = tmp_var;
+    }
+    ret = decode_parameter_from_string(priv, &str_ptr, "PREAMBLE=", PARAM_TYPE_INT, &tmp_var, 5, TRUE);
     if (ret)
     {
         return -1;
     }
     ap_mac_config->preamble = tmp_var;
-    ret = decode_parameter_from_string(priv, &str_ptr, "MAX_SCB=", PARAM_TYPE_INT,  &tmp_var, 5);
+    ret = decode_parameter_from_string(priv, &str_ptr, "MAX_SCB=", PARAM_TYPE_INT,  &tmp_var, 5, TRUE);
     ap_config->max_connections = tmp_var;
+
     return ret;
 }
 
@@ -1542,6 +1555,8 @@ static int unifi_siwap(struct net_device *dev, struct iw_request_info *info,
             func_exit();
             return convert_sme_error(err);
         }
+
+        priv->ignore_bssid_join = TRUE;
     }
     func_exit();
 
@@ -1622,7 +1637,6 @@ static int unifi_siwscan(struct net_device *dev, struct iw_request_info *info,
                     interfacePriv->interfaceMode);
         return -EPERM;
     }
-
 
     scantype = UNIFI_SCAN_ACTIVE;
 
@@ -2112,17 +2126,26 @@ static int unifi_siwessid(struct net_device *dev, struct iw_request_info *info,
         priv->connection_config.ssid.length = 0;
     }
 
-    UF_RTNL_UNLOCK();
-    err = sme_mgt_connect(priv);
-    UF_RTNL_LOCK();
-    if (err)
+    if(priv->ignore_bssid_join)
     {
-        /* wpa_supplicant sets 32 bytes random ssid during disconnection. Avoid
-           to print error in that case */
-        if (len != 32)
-            unifi_error(priv, "unifi_siwessid: Join failed, status %d\n", err);
-        func_exit();
-        return convert_sme_error(err);
+        priv->ignore_bssid_join = FALSE;
+    }
+    else
+    {
+		UF_RTNL_UNLOCK();
+		err = sme_mgt_connect(priv);
+		UF_RTNL_LOCK();
+		if (err)
+		{
+			/* wpa_supplicant sets 32 bytes random ssid during disconnection. Avoid
+			   to print error in that case */
+			if (len != 32)
+				unifi_error(priv, "unifi_siwessid: Join failed, status %d\n", err);
+			func_exit();
+			return convert_sme_error(err);
+		}
+
+		priv->ignore_bssid_join = TRUE;
     }
 
     func_exit();
@@ -3201,7 +3224,6 @@ static int _unifi_siwauth(struct net_device *dev, struct iw_request_info *info,
 
         case IW_AUTH_WPA_VERSION:
             unifi_trace(priv, UDBG1, "IW_AUTH_WPA_VERSION: %d\n", wrqu->param.value);
-            priv->ignore_bssid_join = TRUE;
             /*
                IW_AUTH_WPA_VERSION_DISABLED 0x00000001
                IW_AUTH_WPA_VERSION_WPA      0x00000002

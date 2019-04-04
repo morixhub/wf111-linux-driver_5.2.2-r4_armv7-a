@@ -79,6 +79,8 @@ static CsrMsgConvMsgEntry csrwifisme_conv_lut[] = {
     { CSR_WIFI_SME_INTERFACE_CAPABILITY_GET_REQ, CsrWifiSmeInterfaceCapabilityGetReqSizeof, CsrWifiSmeInterfaceCapabilityGetReqSer, CsrWifiSmeInterfaceCapabilityGetReqDes, CsrWifiSmeInterfaceCapabilityGetReqSerFree },
     { CSR_WIFI_SME_WPS_CONFIGURATION_REQ, CsrWifiSmeWpsConfigurationReqSizeof, CsrWifiSmeWpsConfigurationReqSer, CsrWifiSmeWpsConfigurationReqDes, CsrWifiSmeWpsConfigurationReqSerFree },
     { CSR_WIFI_SME_SET_REQ, CsrWifiSmeSetReqSizeof, CsrWifiSmeSetReqSer, CsrWifiSmeSetReqDes, CsrWifiSmeSetReqSerFree },
+    { CSR_WIFI_SME_SET_TIMINGS, CsrWifiSmeSetTimingsSizeof, CsrWifiSmeSetTimingsSer, CsrWifiSmeSetTimingsDes, CsrWifiSmeSetTimingsSerFree },
+    { CSR_WIFI_SME_SET_MAX_RESULTS, CsrWifiSmeSetMaxResultsSizeof, CsrWifiSmeSetMaxResultsSer, CsrWifiSmeSetMaxResultsDes, CsrWifiSmeSetMaxResultsSerFree },
     { CSR_WIFI_SME_ACTIVATE_CFM, CsrWifiSmeActivateCfmSizeof, CsrWifiSmeActivateCfmSer, CsrWifiSmeActivateCfmDes, CsrWifiSmeActivateCfmSerFree },
     { CSR_WIFI_SME_ADHOC_CONFIG_GET_CFM, CsrWifiSmeAdhocConfigGetCfmSizeof, CsrWifiSmeAdhocConfigGetCfmSer, CsrWifiSmeAdhocConfigGetCfmDes, CsrWifiSmeAdhocConfigGetCfmSerFree },
     { CSR_WIFI_SME_ADHOC_CONFIG_SET_CFM, CsrWifiSmeAdhocConfigSetCfmSizeof, CsrWifiSmeAdhocConfigSetCfmSer, CsrWifiSmeAdhocConfigSetCfmDes, CsrWifiSmeAdhocConfigSetCfmSerFree },

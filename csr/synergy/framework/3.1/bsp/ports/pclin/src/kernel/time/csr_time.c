@@ -28,11 +28,19 @@
 
 CsrTime CsrTimeGet(CsrTime *high)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+    struct timespec64 ts;
+#else
     struct timespec ts;
+#endif
     CsrUint64 time;
     CsrTime low;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+    ktime_get_coarse_ts64(&ts);
+#else
     ts = current_kernel_time();
+#endif
     time = (CsrUint64) ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 
     if (high != NULL)
@@ -47,10 +55,18 @@ CsrTime CsrTimeGet(CsrTime *high)
 
 void CsrTimeUtcGet(CsrTimeUtc *tod, CsrTime *low, CsrTime *high)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+    struct timespec64 ts;
+#else
     struct timespec ts;
+#endif
     CsrUint64 time;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+    ktime_get_coarse_ts64(&ts);
+#else
     ts = current_kernel_time();
+#endif
     time = (CsrUint64) ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 
     if (high != NULL)

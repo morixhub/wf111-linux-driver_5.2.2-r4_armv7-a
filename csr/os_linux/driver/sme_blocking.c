@@ -107,7 +107,6 @@ sme_init_request(unifi_priv_t *priv)
 
 } /* sme_init_request() */
 
-
 void
 uf_sme_complete_request(unifi_priv_t *priv, CsrResult reply_status, const char *func)
 {
@@ -500,6 +499,7 @@ int sme_mgt_disconnect(unifi_priv_t *priv)
         return r;
     }
 
+    priv->wext_wireless_stats.qual.updated = IW_QUAL_ALL_INVALID;
     unifi_trace(priv, UDBG4, "sme_mgt_disconnect: <-- (status=%d)\n", priv->sme_reply.reply_status);
     return convert_sme_error(priv->sme_reply.reply_status);
 }
@@ -1495,7 +1495,7 @@ int sme_ap_start(unifi_priv_t *priv,CsrUint16 interface_tag,
         return -EIO;
     }
 
-    CsrWifiNmeApStartReqSend(0,interface_tag,CSR_WIFI_AP_TYPE_LEGACY,FALSE,
+    CsrWifiNmeApStartReqSend(0,interface_tag,CSR_WIFI_AP_TYPE_LEGACY,ap_config->hidden,
                              ap_config->ssid,1,ap_config->channel,
                              ap_config->credentials,ap_config->max_connections,
                              p2p_go_param,FALSE);
